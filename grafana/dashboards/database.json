@@ -1,0 +1,67 @@
+{
+  "dashboard": {
+    "title": "Maestrio - Database",
+    "uid": "maestrio-db",
+    "tags": ["maestrio"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "title": "Query Rate (QPM)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "sum(rate(db_query_total[5m])) * 60",
+            "legendFormat": "QPM"
+          }
+        ]
+      },
+      {
+        "title": "Connection Pool",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+        "targets": [
+          {
+            "expr": "db_pool_total",
+            "legendFormat": "Total"
+          },
+          {
+            "expr": "db_pool_idle",
+            "legendFormat": "Idle"
+          },
+          {
+            "expr": "db_pool_waiting",
+            "legendFormat": "Waiting"
+          }
+        ]
+      },
+      {
+        "title": "Query Rate by Operation",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+        "targets": [
+          {
+            "expr": "sum(rate(db_query_total[5m])) by (operation) * 60",
+            "legendFormat": "{{operation}}"
+          }
+        ]
+      },
+      {
+        "title": "Slow Queries (Tempo)",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+        "datasource": { "type": "tempo" },
+        "targets": [
+          {
+            "queryType": "search",
+            "serviceName": "maestrio-dashboard",
+            "minDuration": "500ms",
+            "search": "db.system=postgresql"
+          }
+        ]
+      }
+    ]
+  }
+}

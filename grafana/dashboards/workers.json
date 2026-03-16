@@ -1,0 +1,71 @@
+{
+  "dashboard": {
+    "title": "Maestrio - Workers & Agents",
+    "uid": "maestrio-workers",
+    "tags": ["maestrio"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": { "from": "now-1h", "to": "now" },
+    "panels": [
+      {
+        "title": "Queue Throughput (per min)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "sum(rate(worker_dispatch_duration_seconds_count[5m])) * 60",
+            "legendFormat": "Jobs/min"
+          }
+        ]
+      },
+      {
+        "title": "Success Rate",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+        "targets": [
+          {
+            "expr": "(1 - sum(rate(worker_dispatch_errors_total[5m])) / sum(rate(worker_dispatch_duration_seconds_count[5m]))) * 100",
+            "legendFormat": "Success %"
+          }
+        ]
+      },
+      {
+        "title": "Avg Processing Time",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+        "targets": [
+          {
+            "expr": "sum(rate(worker_dispatch_duration_seconds_sum[5m])) / sum(rate(worker_dispatch_duration_seconds_count[5m]))",
+            "legendFormat": "Avg"
+          }
+        ]
+      },
+      {
+        "title": "Processing Time by Worker",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(worker_dispatch_duration_seconds_bucket[5m])) by (worker, le))",
+            "legendFormat": "{{worker}} p95"
+          },
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(worker_dispatch_duration_seconds_bucket[5m])) by (worker, le))",
+            "legendFormat": "{{worker}} p50"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate by Worker",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+        "targets": [
+          {
+            "expr": "sum(rate(worker_dispatch_errors_total[5m])) by (worker) * 60",
+            "legendFormat": "{{worker}}"
+          }
+        ]
+      }
+    ]
+  }
+}
