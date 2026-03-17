@@ -9,7 +9,7 @@ scrape_configs:
 
   - job_name: "maestrio-dashboard"
     metrics_path: "/api/metrics"
-    scheme: "https"
+    scheme: "${METRICS_SCHEME}"
     authorization:
       credentials: "${METRICS_SECRET}"
     static_configs:

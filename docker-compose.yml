@@ -11,6 +11,10 @@ services:
       - "9090:9090"
     volumes:
       - prometheus_data:/prometheus
+    environment:
+      - METRICS_SECRET=${METRICS_SECRET}
+      - METRICS_SCHEME=${METRICS_SCHEME:-http}
+      - DASHBOARD_HOST=${DASHBOARD_HOST}
 
   loki:
     build:

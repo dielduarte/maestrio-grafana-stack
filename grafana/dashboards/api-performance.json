@@ -1,104 +1,305 @@
 {
-  "dashboard": {
-    "title": "Maestrio - API Performance",
-    "uid": "maestrio-api-perf",
-    "tags": ["maestrio"],
-    "timezone": "browser",
-    "refresh": "30s",
-    "time": { "from": "now-1h", "to": "now" },
-    "panels": [
+  "title": "Maestrio - API Performance",
+  "uid": "maestrio-api-perf",
+  "tags": [
+    "maestrio"
+  ],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
       {
-        "title": "Request Rate (RPM)",
-        "type": "stat",
-        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
-        "targets": [
-          {
-            "expr": "sum(rate(http_request_duration_seconds_count{service=\"maestrio-dashboard\"}[5m])) * 60",
-            "legendFormat": "RPM"
-          }
-        ]
-      },
-      {
-        "title": "Error Rate (%)",
-        "type": "stat",
-        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
-        "targets": [
-          {
-            "expr": "sum(rate(http_request_duration_seconds_count{service=\"maestrio-dashboard\",status_code=~\"5..\"}[5m])) / sum(rate(http_request_duration_seconds_count{service=\"maestrio-dashboard\"}[5m])) * 100",
-            "legendFormat": "Error %"
-          }
-        ]
-      },
-      {
-        "title": "Avg Latency",
-        "type": "stat",
-        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
-        "targets": [
-          {
-            "expr": "sum(rate(http_request_duration_seconds_sum{service=\"maestrio-dashboard\"}[5m])) / sum(rate(http_request_duration_seconds_count{service=\"maestrio-dashboard\"}[5m]))",
-            "legendFormat": "Avg"
-          }
-        ]
-      },
-      {
-        "title": "Latency Percentiles",
-        "type": "timeseries",
-        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{service=\"maestrio-dashboard\"}[5m])) by (le))",
-            "legendFormat": "p50"
-          },
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"maestrio-dashboard\"}[5m])) by (le))",
-            "legendFormat": "p95"
-          },
-          {
-            "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service=\"maestrio-dashboard\"}[5m])) by (le))",
-            "legendFormat": "p99"
-          }
-        ]
-      },
-      {
-        "title": "Request Rate by Endpoint",
-        "type": "timeseries",
-        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
-        "targets": [
-          {
-            "expr": "sum(rate(http_request_duration_seconds_count{service=\"maestrio-dashboard\"}[5m])) by (route) * 60",
-            "legendFormat": "{{route}}"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "custom": { "stacking": { "mode": "normal" } }
-          }
+        "name": "service",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafana_prometheus"
+        },
+        "query": "label_values(http_request_duration_seconds_count, service)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
         }
       },
       {
-        "title": "Status Code Distribution",
-        "type": "piechart",
-        "gridPos": { "h": 8, "w": 6, "x": 0, "y": 12 },
-        "targets": [
-          {
-            "expr": "sum(increase(http_request_duration_seconds_count{service=\"maestrio-dashboard\"}[1h])) by (status_code)",
-            "legendFormat": "{{status_code}}"
-          }
-        ]
+        "name": "route",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafana_prometheus"
+        },
+        "query": "label_values(http_request_duration_seconds_count{service=~\"$service\"}, route)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       },
       {
-        "title": "Slowest Endpoints (p95)",
-        "type": "table",
-        "gridPos": { "h": 8, "w": 18, "x": 6, "y": 12 },
-        "targets": [
-          {
-            "expr": "topk(10, histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"maestrio-dashboard\"}[5m])) by (route, le)))",
-            "legendFormat": "{{route}}",
-            "format": "table",
-            "instant": true
-          }
-        ]
+        "name": "method",
+        "type": "custom",
+        "query": "GET,POST,PUT,DELETE,PATCH",
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       }
     ]
-  }
+  },
+  "panels": [
+    {
+      "title": "Request Rate (RPM)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_seconds_count{service=~\"$service\"}[5m])) * 60",
+          "legendFormat": "RPM"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Error Rate (%)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_seconds_count{service=~\"$service\",status_code=~\"5..\"}[5m])) / sum(rate(http_request_duration_seconds_count{service=~\"$service\"}[5m])) * 100",
+          "legendFormat": "Error %"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Avg Latency",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_seconds_sum{service=~\"$service\"}[5m])) / sum(rate(http_request_duration_seconds_count{service=~\"$service\"}[5m]))",
+          "legendFormat": "Avg"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Latency Percentiles",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{service=~\"$service\"}[5m])) by (le))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=~\"$service\"}[5m])) by (le))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service=~\"$service\"}[5m])) by (le))",
+          "legendFormat": "p99"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Request Rate by Endpoint",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_seconds_count{service=~\"$service\"}[5m])) by (route) * 60",
+          "legendFormat": "{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Status Code Distribution",
+      "type": "piechart",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(http_request_duration_seconds_count{service=~\"$service\"}[1h])) by (status_code)",
+          "legendFormat": "{{status_code}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Slowest Endpoints (p95)",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=~\"$service\"}[5m])) by (route, le)))",
+          "legendFormat": "{{route}}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Latency Heatmap",
+      "type": "heatmap",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(http_request_duration_seconds_bucket{service=~\"$service\",route=~\"$route\",method=~\"$method\"}[$__interval])) by (le)",
+          "legendFormat": "{{le}}",
+          "format": "heatmap"
+        }
+      ],
+      "options": {
+        "calculate": false,
+        "yAxis": {
+          "unit": "s"
+        },
+        "color": {
+          "scheme": "Oranges"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Error Rate by Endpoint",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_seconds_count{service=~\"$service\",status_code=~\"5..\"}[5m])) by (route) / sum(rate(http_request_duration_seconds_count{service=~\"$service\"}[5m])) by (route) * 100",
+          "legendFormat": "{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Throughput by HTTP Method",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_seconds_count{service=~\"$service\",method=~\"$method\"}[5m])) by (method) * 60",
+          "legendFormat": "{{method}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    }
+  ]
 }

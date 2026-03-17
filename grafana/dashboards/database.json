@@ -1,67 +1,221 @@
 {
-  "dashboard": {
-    "title": "Maestrio - Database",
-    "uid": "maestrio-db",
-    "tags": ["maestrio"],
-    "timezone": "browser",
-    "refresh": "30s",
-    "time": { "from": "now-1h", "to": "now" },
-    "panels": [
+  "title": "Maestrio - Database",
+  "uid": "maestrio-db",
+  "tags": [
+    "maestrio"
+  ],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
       {
-        "title": "Query Rate (QPM)",
-        "type": "stat",
-        "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
-        "targets": [
-          {
-            "expr": "sum(rate(db_query_total[5m])) * 60",
-            "legendFormat": "QPM"
-          }
-        ]
-      },
-      {
-        "title": "Connection Pool",
-        "type": "timeseries",
-        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
-        "targets": [
-          {
-            "expr": "db_pool_total",
-            "legendFormat": "Total"
-          },
-          {
-            "expr": "db_pool_idle",
-            "legendFormat": "Idle"
-          },
-          {
-            "expr": "db_pool_waiting",
-            "legendFormat": "Waiting"
-          }
-        ]
-      },
-      {
-        "title": "Query Rate by Operation",
-        "type": "timeseries",
-        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
-        "targets": [
-          {
-            "expr": "sum(rate(db_query_total[5m])) by (operation) * 60",
-            "legendFormat": "{{operation}}"
-          }
-        ]
-      },
-      {
-        "title": "Slow Queries (Tempo)",
-        "type": "table",
-        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
-        "datasource": { "type": "tempo" },
-        "targets": [
-          {
-            "queryType": "search",
-            "serviceName": "maestrio-dashboard",
-            "minDuration": "500ms",
-            "search": "db.system=postgresql"
-          }
-        ]
+        "name": "service",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafana_prometheus"
+        },
+        "query": "label_values(db_query_total, service)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       }
     ]
-  }
+  },
+  "panels": [
+    {
+      "title": "Query Rate (QPM)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(db_query_total{service=~\"$service\"}[5m])) * 60",
+          "legendFormat": "QPM"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Connection Pool Saturation",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "db_pool_waiting{service=~\"$service\"} / db_pool_total{service=~\"$service\"} * 100",
+          "legendFormat": "Saturation %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Connection Pool",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "db_pool_total{service=~\"$service\"}",
+          "legendFormat": "Total"
+        },
+        {
+          "expr": "db_pool_idle{service=~\"$service\"}",
+          "legendFormat": "Idle"
+        },
+        {
+          "expr": "db_pool_waiting{service=~\"$service\"}",
+          "legendFormat": "Waiting"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Query Rate by Operation",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(db_query_total{service=~\"$service\"}[5m])) by (operation) * 60",
+          "legendFormat": "{{operation}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Query Duration by Operation (p95)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket{service=~\"$service\"}[5m])) by (operation, le))",
+          "legendFormat": "{{operation}} p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Query Duration Heatmap",
+      "type": "heatmap",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(db_query_duration_seconds_bucket{service=~\"$service\"}[$__interval])) by (le)",
+          "legendFormat": "{{le}}",
+          "format": "heatmap"
+        }
+      ],
+      "options": {
+        "calculate": false,
+        "yAxis": {
+          "unit": "s"
+        },
+        "color": {
+          "scheme": "Oranges"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Slow Queries (Tempo)",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "datasource": {
+        "type": "tempo",
+        "uid": "grafana_tempo"
+      },
+      "targets": [
+        {
+          "queryType": "search",
+          "serviceName": "maestrio-dashboard",
+          "minDuration": "500ms",
+          "search": "db.system=postgresql"
+        }
+      ]
+    }
+  ]
 }

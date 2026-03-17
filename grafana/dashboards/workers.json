@@ -1,71 +1,225 @@
 {
-  "dashboard": {
-    "title": "Maestrio - Workers & Agents",
-    "uid": "maestrio-workers",
-    "tags": ["maestrio"],
-    "timezone": "browser",
-    "refresh": "30s",
-    "time": { "from": "now-1h", "to": "now" },
-    "panels": [
+  "title": "Maestrio - Workers & Agents",
+  "uid": "maestrio-workers",
+  "tags": [
+    "maestrio"
+  ],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
       {
-        "title": "Queue Throughput (per min)",
-        "type": "stat",
-        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
-        "targets": [
-          {
-            "expr": "sum(rate(worker_dispatch_duration_seconds_count[5m])) * 60",
-            "legendFormat": "Jobs/min"
-          }
-        ]
+        "name": "service",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafana_prometheus"
+        },
+        "query": "label_values(worker_dispatch_duration_seconds_count, service)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       },
       {
-        "title": "Success Rate",
-        "type": "stat",
-        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
-        "targets": [
-          {
-            "expr": "(1 - sum(rate(worker_dispatch_errors_total[5m])) / sum(rate(worker_dispatch_duration_seconds_count[5m]))) * 100",
-            "legendFormat": "Success %"
-          }
-        ]
-      },
-      {
-        "title": "Avg Processing Time",
-        "type": "stat",
-        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
-        "targets": [
-          {
-            "expr": "sum(rate(worker_dispatch_duration_seconds_sum[5m])) / sum(rate(worker_dispatch_duration_seconds_count[5m]))",
-            "legendFormat": "Avg"
-          }
-        ]
-      },
-      {
-        "title": "Processing Time by Worker",
-        "type": "timeseries",
-        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(worker_dispatch_duration_seconds_bucket[5m])) by (worker, le))",
-            "legendFormat": "{{worker}} p95"
-          },
-          {
-            "expr": "histogram_quantile(0.50, sum(rate(worker_dispatch_duration_seconds_bucket[5m])) by (worker, le))",
-            "legendFormat": "{{worker}} p50"
-          }
-        ]
-      },
-      {
-        "title": "Error Rate by Worker",
-        "type": "timeseries",
-        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
-        "targets": [
-          {
-            "expr": "sum(rate(worker_dispatch_errors_total[5m])) by (worker) * 60",
-            "legendFormat": "{{worker}}"
-          }
-        ]
+        "name": "worker",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafana_prometheus"
+        },
+        "query": "label_values(worker_dispatch_duration_seconds_count{service=~\"$service\"}, worker)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       }
     ]
-  }
+  },
+  "panels": [
+    {
+      "title": "Queue Throughput (per min)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(worker_dispatch_duration_seconds_count{service=~\"$service\",worker=~\"$worker\"}[5m])) * 60",
+          "legendFormat": "Jobs/min"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Success Rate",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "(1 - sum(rate(worker_dispatch_errors_total{service=~\"$service\",worker=~\"$worker\"}[5m])) / sum(rate(worker_dispatch_duration_seconds_count{service=~\"$service\",worker=~\"$worker\"}[5m]))) * 100",
+          "legendFormat": "Success %"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Avg Processing Time",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(worker_dispatch_duration_seconds_sum{service=~\"$service\",worker=~\"$worker\"}[5m])) / sum(rate(worker_dispatch_duration_seconds_count{service=~\"$service\",worker=~\"$worker\"}[5m]))",
+          "legendFormat": "Avg"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Queue Depth",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "worker_queue_depth{service=~\"$service\",worker=~\"$worker\"}",
+          "legendFormat": "{{worker}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Processing Time by Worker",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(worker_dispatch_duration_seconds_bucket{service=~\"$service\",worker=~\"$worker\"}[5m])) by (worker, le))",
+          "legendFormat": "{{worker}} p95"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(worker_dispatch_duration_seconds_bucket{service=~\"$service\",worker=~\"$worker\"}[5m])) by (worker, le))",
+          "legendFormat": "{{worker}} p50"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Error Rate by Worker",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(worker_dispatch_errors_total{service=~\"$service\",worker=~\"$worker\"}[5m])) by (worker) * 60",
+          "legendFormat": "{{worker}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Retry Count",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(worker_retries_total{service=~\"$service\",worker=~\"$worker\"}[5m])) by (worker)",
+          "legendFormat": "{{worker}}"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Job Duration Heatmap",
+      "type": "heatmap",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(worker_dispatch_duration_seconds_bucket{service=~\"$service\",worker=~\"$worker\"}[$__interval])) by (le)",
+          "legendFormat": "{{le}}",
+          "format": "heatmap"
+        }
+      ],
+      "options": {
+        "calculate": false,
+        "yAxis": {
+          "unit": "s"
+        },
+        "color": {
+          "scheme": "Oranges"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    }
+  ]
 }
