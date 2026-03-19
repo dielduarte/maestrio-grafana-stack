@@ -88,7 +88,7 @@
       }
     },
     {
-      "title": "Avg Processing Time",
+      "title": "Avg Dispatch Latency",
       "type": "stat",
       "gridPos": {
         "h": 4,
@@ -102,6 +102,11 @@
           "legendFormat": "Avg"
         }
       ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
       "datasource": {
         "type": "prometheus",
         "uid": "grafana_prometheus"
@@ -128,7 +133,8 @@
       }
     },
     {
-      "title": "Processing Time by Worker",
+      "title": "Dispatch Latency by Worker",
+      "description": "Time from queue dequeue to container HTTP response (container startup + routing)",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -146,6 +152,11 @@
           "legendFormat": "{{worker}} p50"
         }
       ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
       "datasource": {
         "type": "prometheus",
         "uid": "grafana_prometheus"
@@ -172,12 +183,63 @@
       }
     },
     {
+      "title": "Avg Container Execution Time",
+      "description": "Average time the container spends running a job (triage or coding agent)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_execution_duration_seconds_sum{service=~\"$service\",worker=~\"$worker\"}[5m])) / sum(rate(container_execution_duration_seconds_count{service=~\"$service\",worker=~\"$worker\"}[5m]))",
+          "legendFormat": "Avg"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Container Success vs Error",
+      "description": "Container job completions by outcome",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_execution_duration_seconds_count{service=~\"$service\",worker=~\"$worker\",status=\"success\"}[5m])) * 60",
+          "legendFormat": "Success/min"
+        },
+        {
+          "expr": "sum(rate(container_execution_duration_seconds_count{service=~\"$service\",worker=~\"$worker\",status=\"error\"}[5m])) * 60",
+          "legendFormat": "Error/min"
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
       "title": "Retry Count",
       "type": "timeseries",
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
+        "h": 4,
+        "w": 8,
+        "x": 16,
         "y": 12
       },
       "targets": [
@@ -192,17 +254,48 @@
       }
     },
     {
-      "title": "Job Duration Heatmap",
+      "title": "Container Execution Time by Worker",
+      "description": "Full job duration inside the container (clone + agent run + status callback)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(container_execution_duration_seconds_bucket{service=~\"$service\",worker=~\"$worker\"}[5m])) by (worker, le))",
+          "legendFormat": "{{worker}} p95"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(container_execution_duration_seconds_bucket{service=~\"$service\",worker=~\"$worker\"}[5m])) by (worker, le))",
+          "legendFormat": "{{worker}} p50"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Container Execution Heatmap",
+      "description": "Distribution of container job durations",
       "type": "heatmap",
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 16
       },
       "targets": [
         {
-          "expr": "sum(increase(worker_dispatch_duration_seconds_bucket{service=~\"$service\",worker=~\"$worker\"}[$__interval])) by (le)",
+          "expr": "sum(increase(container_execution_duration_seconds_bucket{service=~\"$service\",worker=~\"$worker\"}[$__interval])) by (le)",
           "legendFormat": "{{le}}",
           "format": "heatmap"
         }
