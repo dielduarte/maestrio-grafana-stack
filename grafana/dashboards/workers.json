@@ -183,18 +183,44 @@
       }
     },
     {
-      "title": "Avg Container Execution Time",
-      "description": "Average time the container spends running a job (triage or coding agent)",
+      "title": "Avg Triage Execution Time",
+      "description": "Average time the container spends running a triage job",
       "type": "stat",
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 4,
         "x": 0,
         "y": 12
       },
       "targets": [
         {
-          "expr": "sum(rate(container_execution_duration_seconds_sum{service=~\"$service\",worker=~\"$worker\"}[5m])) / sum(rate(container_execution_duration_seconds_count{service=~\"$service\",worker=~\"$worker\"}[5m]))",
+          "expr": "sum(rate(container_execution_duration_seconds_sum{service=~\"$service\",worker=\"triage\"}[5m])) / sum(rate(container_execution_duration_seconds_count{service=~\"$service\",worker=\"triage\"}[5m]))",
+          "legendFormat": "Avg"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Avg Coding Execution Time",
+      "description": "Average time the container spends running a coding job",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_execution_duration_seconds_sum{service=~\"$service\",worker=\"coding\"}[5m])) / sum(rate(container_execution_duration_seconds_count{service=~\"$service\",worker=\"coding\"}[5m]))",
           "legendFormat": "Avg"
         }
       ],
@@ -312,6 +338,76 @@
       "datasource": {
         "type": "prometheus",
         "uid": "grafana_prometheus"
+      }
+    },
+    {
+      "title": "Triage Runs",
+      "description": "Duration of each triage container execution",
+      "type": "barchart",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "datasource": {
+        "type": "tempo",
+        "uid": "grafana_tempo"
+      },
+      "targets": [
+        {
+          "queryType": "traceql",
+          "query": "{resource.service.name=~\"$service\" && span.worker=\"triage\"} | select(duration)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ns",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        }
+      },
+      "options": {
+        "orientation": "vertical",
+        "showValue": "auto",
+        "barWidth": 0.8
+      }
+    },
+    {
+      "title": "Coding Runs",
+      "description": "Duration of each coding container execution",
+      "type": "barchart",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "datasource": {
+        "type": "tempo",
+        "uid": "grafana_tempo"
+      },
+      "targets": [
+        {
+          "queryType": "traceql",
+          "query": "{resource.service.name=~\"$service\" && span.worker=\"coding\"} | select(duration)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ns",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          }
+        }
+      },
+      "options": {
+        "orientation": "vertical",
+        "showValue": "auto",
+        "barWidth": 0.8
       }
     }
   ]
