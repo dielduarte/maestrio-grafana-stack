@@ -210,10 +210,8 @@
       },
       "targets": [
         {
-          "queryType": "search",
-          "serviceName": "maestrio-dashboard",
-          "minDuration": "500ms",
-          "search": "db.system=postgresql"
+          "queryType": "traceql",
+          "query": "{resource.service.name=~\"$service\" && span.db.system=\"postgresql\" && duration > 500ms}"
         }
       ]
     }
