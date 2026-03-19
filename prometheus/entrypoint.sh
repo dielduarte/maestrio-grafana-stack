@@ -2,7 +2,10 @@
 set -e
 
 # Substitute environment variables into the Prometheus config
-envsubst < /etc/prometheus/prom.yml.template > /etc/prometheus/prom.yml
+sed -e "s|\${METRICS_SCHEME}|${METRICS_SCHEME}|g" \
+    -e "s|\${METRICS_SECRET}|${METRICS_SECRET}|g" \
+    -e "s|\${DASHBOARD_HOST}|${DASHBOARD_HOST}|g" \
+    /etc/prometheus/prom.yml.template > /etc/prometheus/prom.yml
 
 # Start Prometheus
 exec /bin/prometheus \
