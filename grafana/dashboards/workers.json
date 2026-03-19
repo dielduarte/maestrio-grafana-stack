@@ -194,7 +194,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(container_execution_duration_seconds_sum{service=~\"$service\",worker=\"triage\"}[5m])) / sum(rate(container_execution_duration_seconds_count{service=~\"$service\",worker=\"triage\"}[5m]))",
+          "expr": "sum(increase(container_execution_duration_seconds_sum{service=~\"$service\",worker=\"triage\"}[$__range])) / sum(increase(container_execution_duration_seconds_count{service=~\"$service\",worker=\"triage\"}[$__range]))",
           "legendFormat": "Avg"
         }
       ],
@@ -220,7 +220,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(container_execution_duration_seconds_sum{service=~\"$service\",worker=\"coding\"}[5m])) / sum(rate(container_execution_duration_seconds_count{service=~\"$service\",worker=\"coding\"}[5m]))",
+          "expr": "sum(increase(container_execution_duration_seconds_sum{service=~\"$service\",worker=\"coding\"}[$__range])) / sum(increase(container_execution_duration_seconds_count{service=~\"$service\",worker=\"coding\"}[$__range]))",
           "legendFormat": "Avg"
         }
       ],
