@@ -31,8 +31,7 @@ storage:
     wal:
       path: /var/tempo/wal
 
-querier:
-  search_default_result_limit: 20
+querier: {}
 
 metrics_generator:
   registry:
