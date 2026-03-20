@@ -31,7 +31,8 @@ storage:
     wal:
       path: /var/tempo/wal
 
-querier: {}
+querier:
+  search_prefer_recent_first: true
 
 metrics_generator:
   registry:
@@ -46,4 +47,4 @@ metrics_generator:
 overrides:
   defaults:
     metrics_generator:
-      processors: [service-graphs, span-metrics]
+      processors: [service-graphs, span-metrics, local-blocks]

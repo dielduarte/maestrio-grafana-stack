@@ -107,7 +107,7 @@
       "targets": [
         {
           "queryType": "traceql",
-          "query": "{resource.service.name=~\"$service\" && status=error} | rate() by (name)"
+          "query": "{resource.service.name=~\"$service\"} | rate() by (name)"
         }
       ]
     },
