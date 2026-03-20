@@ -31,9 +31,6 @@ storage:
     wal:
       path: /var/tempo/wal
 
-querier:
-  search_prefer_recent_first: true
-
 metrics_generator:
   registry:
     external_labels:
