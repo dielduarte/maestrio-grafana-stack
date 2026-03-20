@@ -22,6 +22,7 @@
         "query": "label_values(http_request_duration_seconds_count, service)",
         "refresh": 2,
         "includeAll": true,
+        "allValue": ".+",
         "multi": true,
         "current": {
           "text": "All",
@@ -66,7 +67,7 @@
       "targets": [
         {
           "queryType": "traceql",
-          "query": "{resource.service.name=\"maestrio-dashboard\"}"
+          "query": "{resource.service.name=~\"$service\"}"
         }
       ]
     },
@@ -86,7 +87,7 @@
       "targets": [
         {
           "queryType": "traceql",
-          "query": "{resource.service.name=\"maestrio-dashboard\" && status=error}"
+          "query": "{resource.service.name=~\"$service\" && status=error}"
         }
       ]
     },
@@ -106,7 +107,7 @@
       "targets": [
         {
           "queryType": "traceql",
-          "query": "{resource.service.name=\"maestrio-dashboard\" && status=error} | rate() by (name)"
+          "query": "{resource.service.name=~\"$service\" && status=error} | rate() by (name)"
         }
       ]
     },
@@ -126,7 +127,7 @@
       "targets": [
         {
           "queryType": "traceql",
-          "query": "{resource.service.name=\"maestrio-dashboard\"}"
+          "query": "{resource.service.name=~\"$service\"}"
         }
       ]
     }
