@@ -92,33 +92,13 @@
       ]
     },
     {
-      "title": "Trace Duration by Operation",
-      "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 30
-      },
-      "datasource": {
-        "type": "tempo",
-        "uid": "grafana_tempo"
-      },
-      "targets": [
-        {
-          "queryType": "traceql",
-          "query": "{resource.service.name=~\"$service\"} | rate() by (name)"
-        }
-      ]
-    },
-    {
       "title": "Latency Distribution by Service",
       "type": "histogram",
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 30
       },
       "datasource": {
         "type": "tempo",

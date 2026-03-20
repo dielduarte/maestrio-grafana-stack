@@ -3,7 +3,7 @@ server:
 
 distributor:
   log_received_spans:
-    enabled: true
+    enabled: false
   receivers:
     otlp:
       protocols:
@@ -13,15 +13,16 @@ distributor:
           endpoint: "0.0.0.0:4318"
 
 ingester:
-  trace_idle_period: 10s
-  max_block_bytes: 1_000_000
+  trace_idle_period: 30s
+  max_block_bytes: 500_000
   max_block_duration: 5m
+  flush_check_period: 2m
 
 compactor:
   compaction:
     compaction_window: 1h
-    max_block_bytes: 100_000_000
-    block_retention: 72h
+    max_block_bytes: 50_000_000
+    block_retention: 48h
 
 storage:
   trace:
@@ -30,11 +31,15 @@ storage:
       path: /var/tempo/traces
     wal:
       path: /var/tempo/wal
+    pool:
+      max_workers: 10
+      queue_depth: 100
 
 metrics_generator:
   registry:
     external_labels:
       source: tempo
+    stale_duration: 5m
   storage:
     path: /var/tempo/generator/wal
     remote_write:
@@ -44,4 +49,4 @@ metrics_generator:
 overrides:
   defaults:
     metrics_generator:
-      processors: [service-graphs, span-metrics, local-blocks]
+      processors: [service-graphs, span-metrics]
